@@ -20,6 +20,7 @@ class LeadSpec extends Specification {
         given:
         RestBuilder rest = new RestBuilder()
         def tokens = grailsApplication.config.cloudelements.tokens
+        def elements = grailsApplication.config.cloudelements.elements
         String baseUrl = "https://api.cloud-elements.com/elements/api-v2"
         RestResponse instances = rest.get("$baseUrl/instances") {
             header "Authorization", "User ${tokens.user}, Organization ${tokens.organization}"
@@ -28,16 +29,16 @@ class LeadSpec extends Specification {
 
         when:
         RestResponse leads = rest.get("$baseUrl/hubs/crm/leads") {
-            header "Authorization", "User ${tokens.user}, Organization ${tokens.organization}, Element ${tokens.elements.zohocrm}"
+            header "Authorization", "User ${tokens.user}, Organization ${tokens.organization}, Element ${tokens.elements[elements.crm]}"
         }
         RestResponse customers = rest.get("$baseUrl/hubs/ecommerce/customers") {
-            header "Authorization", "User ${tokens.user}, Organization ${tokens.organization}, Element ${tokens.elements.shopify}"
+            header "Authorization", "User ${tokens.user}, Organization ${tokens.organization}, Element ${tokens.elements[elements.ecommerce]}"
         }
         customers.json.each { customer ->
             if (!leads.json*.email.contains(customer.email)) {
                 println "${customer.email} is new!"
                 RestResponse newLead = rest.post("$baseUrl/hubs/crm/leads") {
-                    header "Authorization", "User ${tokens.user}, Organization ${tokens.organization}, Element ${tokens.elements.zohocrm}"
+                    header "Authorization", "User ${tokens.user}, Organization ${tokens.organization}, Element ${tokens.elements[elements.crm]}"
                     json([email:customer.email, first_name:customer.first_name, last_name:customer.last_name])
                 }
                 println newLead.json
